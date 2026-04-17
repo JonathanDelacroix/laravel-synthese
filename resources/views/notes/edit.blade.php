@@ -14,19 +14,21 @@
                     </div>
 
                     <form action="{{ route('notes.update', $note) }}" method="POST">
+                        @csrf
+                        @method('PUT')
                         <div class="mb-4">
                             <label for="title" class="block text-sm font-medium text-gray-700">Titre</label>
-                            <input type="text" name="title" id="title" value="" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
+                            <input type="text" name="title" id="title" value="{{ old('title', $note->title) }}" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" required>
                             @error('title')
-                                <p class="text-red-500 text-xs mt-1"></p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <div class="mb-4">
                             <label for="content" class="block text-sm font-medium text-gray-700">Contenu</label>
-                            <textarea name="content" id="content" rows="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" required></textarea>
+                            <textarea name="content" id="content" rows="10" class="mt-1 block w-full border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500" required>{{ old('content', $note->content) }}</textarea>
                             @error('content')
-                                <p class="text-red-500 text-xs mt-1"></p>
+                                <p class="text-red-500 text-xs mt-1">{{ $message }}</p>
                             @enderror
                         </div>
 

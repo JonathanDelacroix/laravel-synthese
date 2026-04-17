@@ -5,15 +5,24 @@ namespace App\Http\Controllers;
 use App\Models\Note;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Foundation\Auth\Access\AuthorizesRequests;
+use Illuminate\Support\Facades\Mail;
+use App\Mail\NoteCreated;
 
 class NoteController extends Controller
 {
+    use AuthorizesRequests;
+
     /**
      * Display a listing of the resource.
      */
     public function index()
     {
-        $notes = Note::where("user_id", Auth::id())->get();
+        if (Auth::user()->hasRole('admin')) {
+            $notes = Note::all();
+        } else {
+            $notes = Note::where('user_id', Auth::id())->get();
+        }
 
         return view('notes.index', compact('notes'));
     }
@@ -31,19 +40,21 @@ class NoteController extends Controller
      */
     public function store(Request $request)
     {
-        // Validation basique à compléter
-        // $validated = $request->validate([
-            
-        // ]);
+        $validated = $request->validate([
+            'title' => 'required|min:3|max:255',
+            'content' => 'required|min:5',
+        ]);
 
         $note = new Note($validated);
-        $note->user()->associate(Auth::user());
+        $note->user_id = Auth::id();
         $note->save();
 
+        Mail::to(auth()->user()->email)
+            ->send(new NoteCreated($note));
 
         return redirect()
             ->route('notes.index')
-            ->with('status', 'Note créé avec succès.');
+            ->with('status', 'Note créée avec succès.');
     }
 
     /**
@@ -51,6 +62,8 @@ class NoteController extends Controller
      */
     public function show(Note $note)
     {
+        $this->authorize('view', $note);
+
         return view('notes.show', compact('note'));
     }
 
@@ -59,6 +72,8 @@ class NoteController extends Controller
      */
     public function edit(Note $note)
     {
+        $this->authorize('update', $note);
+
         return view('notes.edit', compact('note'));
     }
 
@@ -67,10 +82,12 @@ class NoteController extends Controller
      */
     public function update(Request $request, Note $note)
     {
-        // Validation basique à compléter
-        // $validated = $request->validate([
-            
-        // ]);
+        $this->authorize('update', $note);
+
+        $validated = $request->validate([
+            'title' => 'required|min:3|max:255',
+            'content' => 'required|min:5',
+        ]);
 
         $note->update($validated);
 
@@ -84,6 +101,8 @@ class NoteController extends Controller
      */
     public function destroy(Note $note)
     {
+        $this->authorize('delete', $note);
+
         $note->delete();
 
         return redirect()
